@@ -37,14 +37,27 @@
 #include <lmic.h>
 #include <hal/hal.h>
 
+// jonw_dragino_test_6 (OTAA, CSN)
+// application router ID (LSBF)
+static const u1_t PROGMEM APPEUI[8]  = { 0xd3, 0x83, 0xdb, 0x72, 0x08, 0x28, 0xe8, 0x28 };
+
+// unique device ID (LSBF)
+static const u1_t PROGMEM DEVEUI[8]  = { 0x96, 0xab, 0x58, 0xea, 0xe5, 0x35, 0x78, 0x3c };
+
+// device-specific AES key (derived from device EUI)
+static const u1_t PROGMEM APPKEY[16] = { 0x82, 0xc3, 0x1f, 0xfa, 0xb4, 0xd1, 0x47, 0xbb, 0x9a, 0xdc, 0xf0, 0x56, 0xb8, 0xee, 0xe2, 0x22 };
+
+
+
+
 // This EUI must be in little-endian format, so least-significant-byte
 // first. When copying an EUI from ttnctl output, this means to reverse
 // the bytes. For TTN issued EUIs the last bytes should be 0xD5, 0xB3,0x70.
-static const u1_t PROGMEM APPEUI[8]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+//static const u1_t PROGMEM APPEUI[8]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 void os_getArtEui (u1_t* buf) { memcpy_P(buf, APPEUI, 8);}
 
 // This should also be in little endian format, see above.
-static const u1_t PROGMEM DEVEUI[8]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+//static const u1_t PROGMEM DEVEUI[8]= { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 // Here on Raspi we use part of MAC Address do define devEUI so 
 // This one above is not used, but you can still old method 
 // reverting the comments on the 2 following line
@@ -55,7 +68,7 @@ void os_getDevEui (u1_t* buf) { memcpy_P(buf, DEVEUI, 8);}
 // number but a block of memory, endianness does not really apply). In
 // practice, a key taken from ttnctl can be copied as-is.
 // The key shown here is the semtech default key.
-static const u1_t PROGMEM APPKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+//static const u1_t PROGMEM APPKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 void os_getDevKey (u1_t* buf) {  memcpy_P(buf, APPKEY, 16);}
 
 static uint8_t mydata[] = "Raspi TESTING!";
