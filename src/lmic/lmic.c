@@ -1115,6 +1115,7 @@ static bit_t decodeFrame (void) {
                                 e_.info2  = seqno));
 #if LMIC_DEBUG_LEVEL > 0
             printf("%lu: DN seq no obsolete\n", os_getTime());
+#endif
             goto norx;
         }
         // Replay of previous sequence number allowed only if
