@@ -976,7 +976,7 @@ static void stateJustJoined (void) {
 
 
 #if !defined(DISABLE_BEACONS)
-// Decode beacon  - do not overwrite bcninfo unless we have a match!
+// Decodebeacon  - do not overwrite bcninfo unless we have a match!
 static int decodeBeacon (void) {
     ASSERT(LMIC.dataLen == LEN_BCN); // implicit header RX guarantees this
     xref2u1_t d = LMIC.frame;
@@ -1028,6 +1028,7 @@ static bit_t decodeFrame (void) {
                             e_.eui    = MAIN::CDEV->getEui(),
                             e_.info   = dlen < 4 ? 0 : os_rlsbf4(&d[dlen-4]),
                             e_.info2  = hdr + (dlen<<8)));
+	printf("Unexpected frame");
       norx:
 #if LMIC_DEBUG_LEVEL > 0
         printf("%lu: Invalid downlink, window=%s\n", os_getTime(), window);
@@ -1050,12 +1051,14 @@ static bit_t decodeFrame (void) {
                             e_.eui    = MAIN::CDEV->getEui(),
                             e_.info   = addr,
                             e_.info2  = LMIC.devaddr));
+	printf("Alien address");
         goto norx;
     }
     if( poff > pend ) {
         EV(specCond, ERR, (e_.reason = EV::specCond_t::CORRUPTED_FRAME,
                            e_.eui    = MAIN::CDEV->getEui(),
                            e_.info   = 0x1000000 + (poff-pend) + (fct<<8) + (dlen<<16)));
+	printf("Corrupted frame");
         goto norx;
     }
 
@@ -1073,6 +1076,7 @@ static bit_t decodeFrame (void) {
                            e_.info1  = Base::lsbf4(&d[pend]),
                            e_.info2  = seqno,
                            e_.info3  = LMIC.devaddr));
+	printf("Corrupted mic");
         goto norx;
     }
     if( seqno < LMIC.seqnoDn ) {
@@ -1081,6 +1085,7 @@ static bit_t decodeFrame (void) {
                                 e_.eui    = MAIN::CDEV->getEui(),
                                 e_.info   = LMIC.seqnoDn,
                                 e_.info2  = seqno));
+	    printf("ND seq no rollover");
             goto norx;
         }
         if( seqno != LMIC.seqnoDn-1 || !LMIC.dnConf || ftype != HDR_FTYPE_DCDN ) {
@@ -1088,6 +1093,7 @@ static bit_t decodeFrame (void) {
                                 e_.eui    = MAIN::CDEV->getEui(),
                                 e_.info   = LMIC.seqnoDn,
                                 e_.info2  = seqno));
+            printf("DN seq no obsolete");
             goto norx;
         }
         // Replay of previous sequence number allowed only if
