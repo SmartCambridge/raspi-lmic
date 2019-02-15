@@ -1015,9 +1015,15 @@ static int decodeBeacon (void) {
 
 
 static bit_t decodeFrame (void) {
+    // PHYPaylode
     xref2u1_t d = LMIC.frame;
+    // MACHDR (MHDR) field
     u1_t hdr    = d[0];
+    // MType
     u1_t ftype  = hdr & HDR_FTYPE;
+#if LMIC_DEBUG_LEVEL > 0
+    printf("%lu: Message type %d\n", os_getTime(), ftype);
+#endif
     int  dlen   = LMIC.dataLen;
     const char *window = (LMIC.txrxFlags & TXRX_DNW1) ? "RX1" : ((LMIC.txrxFlags & TXRX_DNW2) ? "RX2" : "Other");
     if( dlen < OFF_DAT_OPTS+4 ||
@@ -1028,7 +1034,9 @@ static bit_t decodeFrame (void) {
                             e_.eui    = MAIN::CDEV->getEui(),
                             e_.info   = dlen < 4 ? 0 : os_rlsbf4(&d[dlen-4]),
                             e_.info2  = hdr + (dlen<<8)));
-	printf("Unexpected frame");
+#if LMIC_DEBUG_LEVEL > 0
+	printf("%lu: Unexpected frame\n", os_getTime());
+#endif
       norx:
 #if LMIC_DEBUG_LEVEL > 0
         printf("%lu: Invalid downlink, window=%s\n", os_getTime(), window);
@@ -1046,19 +1054,27 @@ static bit_t decodeFrame (void) {
     int  poff  = OFF_DAT_OPTS+olen;
     int  pend  = dlen-4;  // MIC
 
+#if LMIC_DEBUG_LEVEL > 0
+    printf("%lu: Alien address\n", os_getTime());
+#endif
+
     if( addr != LMIC.devaddr ) {
         EV(specCond, WARN, (e_.reason = EV::specCond_t::ALIEN_ADDRESS,
                             e_.eui    = MAIN::CDEV->getEui(),
                             e_.info   = addr,
                             e_.info2  = LMIC.devaddr));
-	printf("Alien address");
+#if LMIC_DEBUG_LEVEL > 0
+	printf("%lu: Alien address\n", os_getTime());
+#endif
         goto norx;
     }
     if( poff > pend ) {
         EV(specCond, ERR, (e_.reason = EV::specCond_t::CORRUPTED_FRAME,
                            e_.eui    = MAIN::CDEV->getEui(),
                            e_.info   = 0x1000000 + (poff-pend) + (fct<<8) + (dlen<<16)));
-	printf("Corrupted frame");
+#if LMIC_DEBUG_LEVEL > 0
+	printf("%lu: Corrupted frame\n", os_getTime());
+#endif
         goto norx;
     }
 
@@ -1076,7 +1092,9 @@ static bit_t decodeFrame (void) {
                            e_.info1  = Base::lsbf4(&d[pend]),
                            e_.info2  = seqno,
                            e_.info3  = LMIC.devaddr));
-	printf("Corrupted mic");
+#if LMIC_DEBUG_LEVEL > 0
+	printf("%lu: Corrupted mic\n", os_getTime());
+#endif
         goto norx;
     }
     if( seqno < LMIC.seqnoDn ) {
@@ -1085,7 +1103,9 @@ static bit_t decodeFrame (void) {
                                 e_.eui    = MAIN::CDEV->getEui(),
                                 e_.info   = LMIC.seqnoDn,
                                 e_.info2  = seqno));
-	    printf("ND seq no rollover");
+#if LMIC_DEBUG_LEVEL > 0
+	    printf("%lu: ND seq no rollover\n", os_getTime());
+#endif
             goto norx;
         }
         if( seqno != LMIC.seqnoDn-1 || !LMIC.dnConf || ftype != HDR_FTYPE_DCDN ) {
@@ -1093,7 +1113,8 @@ static bit_t decodeFrame (void) {
                                 e_.eui    = MAIN::CDEV->getEui(),
                                 e_.info   = LMIC.seqnoDn,
                                 e_.info2  = seqno));
-            printf("DN seq no obsolete");
+#if LMIC_DEBUG_LEVEL > 0
+            printf("%lu: DN seq no obsolete\n", os_getTime());
             goto norx;
         }
         // Replay of previous sequence number allowed only if
@@ -1128,6 +1149,9 @@ static bit_t decodeFrame (void) {
     xref2u1_t opts = &d[OFF_DAT_OPTS];
     int oidx = 0;
     while( oidx < olen ) {
+#if LMIC_DEBUG_LEVEL > 0
+        printf("%lu: Processing mac option %d at position %d\n", os_getTime(), opts[oidx], oidx);
+#endif
         switch( opts[oidx] ) {
         case MCMD_LCHK_ANS: {
             //int gwmargin = opts[oidx+1];
